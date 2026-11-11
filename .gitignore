@@ -1,0 +1,58 @@
+# --- Dataset: never commit raw or extracted Sleep-EDF data -------------------
+*.zip
+*.edf
+*.EDF
+*.rec
+*.hyp
+*.xls
+*.xlsx
+SHA256SUMS.txt
+data/
+sleep-edf-database-expanded-*/
+
+# --- Reproduction outputs: all seven pipeline stages write here ---------------
+work/
+
+# --- Committed reference results ----------------------------------------------
+# Only the curated aggregate files listed below are tracked.
+results/*
+!results/figures/
+!results/loso_summary.json
+!results/night_pair_summary.json
+!results/audit_summary.json
+!results/window_audit_summary.json
+results/figures/*
+!results/figures/bland_altman_lr_mean_loss.png
+!results/figures/abs_delta_lr_mean_loss.png
+*.parquet
+*.part
+.publish-*
+
+# --- Python / environments ----------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.conda/
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+
+# --- Logs, temporary and OS files ---------------------------------------------
+*.log
+*.tmp
+tmp/
+.DS_Store
+._*
+.idea/
+.vscode/
+
+# --- Local configuration and secrets ------------------------------------------
+.env
+.env.*
+*.local.yaml
+*.local.yml
+
+# --- Third-party documents ----------------------------------------------------
+*.pdf

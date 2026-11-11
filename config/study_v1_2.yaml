@@ -1,0 +1,148 @@
+# Sleep-EDF SC sleep-staging study — frozen analysis configuration, protocol v1.2.
+# Section references (§) point to the internal analysis protocol summarised in report/METHODS.md.
+# "expected_*" values were read from the dataset ZIP on 2026-11-11 (file listing + EDF headers);
+# they are assertions for tests, not results.
+
+study:
+  protocol: v1.2
+  date: 2026-11-11
+  dataset: sleep-edfx
+  dataset_version: 1.0.0
+  cohort: SC
+  target_population: sleep_cassette_new_subjects
+  primary_metric: mean_subject_macro_f1_true_support
+  primary_model: logistic_regression
+  confirmatory_testing: false
+
+data:                                   # §2
+  zip_path: sleep-edfx-1.0.0.zip
+  zip_prefix: sleep-edf-database-expanded-1.0.0/sleep-cassette/
+  access: stream_one_record_to_temp_then_delete
+  full_extraction: false
+  integrity_reference: sleep-edf-database-expanded-1.0.0/SHA256SUMS.txt
+  subject_table: sleep-edf-database-expanded-1.0.0/SC-subjects.xls
+  age_source: subject_table            # EDF header age is cross-check only
+  expected_subjects: 78
+  expected_recordings: 153
+  expected_complete_pairs: 75
+  expected_single_night: {'13': 1, '36': 2, '52': 2}   # subject: available night
+  expected_header_age_conflicts: ['64', '77']
+
+preprocessing:                          # §3
+  main_channel: EEG Fpz-Cz
+  sample_rate_hz: 100
+  epoch_length_seconds: 30
+  stage_order: [W, N1, N2, N3, REM]
+  stage_map:
+    'Sleep stage W': W
+    'Sleep stage 1': N1
+    'Sleep stage 2': N2
+    'Sleep stage 3': N3
+    'Sleep stage 4': N3
+    'Sleep stage R': REM
+  exclude_labels: ['Sleep stage ?', 'Movement time']
+  unknown_label_policy: raise_error
+  analysis_window:                      # label-defined evaluation universe, §3.3
+    is_reference_defined: true
+    sleep_epoch: any_of_N1_N2_N3_REM
+    episode_merge_max_wake_gap_minutes: 60
+    episode_choice: most_sleep_epochs
+    wake_context_minutes_each_side: 30
+    clip_to_recording: true
+    sensitivity_window: first_to_last_sleep_epoch_plus_30min
+  epoch_rejection:                      # label-independent only, §3.6
+    non_finite: true
+    zero_variance: true
+  eeg_units_for_psd: microvolt
+  welch:
+    fs: 100
+    window: hann
+    nperseg: 400
+    noverlap: 200
+    nfft: 400
+    detrend: constant
+    scaling: density
+    average: mean
+  bands_hz:
+    delta: [0.5, 4]
+    theta: [4, 8]
+    alpha: [8, 12]
+    sigma: [12, 16]
+    beta: [16, 30]
+  frequency_intervals: left_closed_right_open_except_last
+  band_power_integration: rectangle_sum   # sum(PSD[bins in band]) * 0.25 Hz
+  total_power: sum_of_five_bands          # relative powers sum to 1 exactly
+  absolute_log10_epsilon_uV2: 1.0e-12
+  features: [absolute_log10_bandpower, relative_bandpower]
+
+models:                                 # §4
+  dummy: {strategy: prior}
+  logistic_regression:
+    scaler: StandardScaler
+    penalty: l2
+    C: 1.0
+    solver: lbfgs
+    tol: 1.0e-4
+    max_iter: 2000
+    class_weight: null
+    convergence_failure_policy: rerun_once_max_iter_10000_then_keep_and_report
+
+validation:                             # §5, §6, §8
+  split: LeaveOneGroupOut
+  groups: subject_id
+  fallback_split: none                  # any deviation is logged before metrics
+  primary_f1_class_set: classes_with_true_support_in_subject
+  sensitivity_f1: [five_class_fixed_zero_division_0, union_true_or_predicted]
+  descriptive_alternatives: [equal_subject_weighted_epoch_confusion_macro_f1, raw_pooled_macro_f1]
+  logloss_clipping_epsilon: 1.0e-15
+  bootstrap_unit: subject_id
+  bootstrap_subject_replicates: 2000
+  bootstrap_random_state: 20261111
+  bootstrap_interval: [2.5, 97.5]
+  bootstrap_is_conditional_descriptive: true
+
+calibration:                            # §8
+  from_out_of_subject_probabilities_only: true
+  reliability_curves: one_vs_rest_per_class
+  bins: 10
+  bin_edges: fixed_width_0_to_1
+  curve_uncertainty: subject_bootstrap
+  brier: multiclass_sum_squared_per_subject_then_mean   # range 0-2
+  ece: none
+
+night_reliability:                      # §7
+  pair_unit: subject_id
+  night_index_source: filename_digit
+  header_dates: recorded_not_arbiter
+  date_concordant_rule: night2_date_minus_night1_date_equals_1_day
+  expected_date_discordant: ['07', '17', '27', '32', '37', '60', '62', '72']
+  expected_date_concordant_pairs: 67
+  scorer_code_source: hypnogram_filename_character_8
+  expected_same_scorer_pairs: 26
+  expected_different_scorer_pairs: 49
+  outcome_central: night_mean_log_loss
+  outcome_companions: [night_median_epoch_log_loss, night_class_balanced_log_loss]
+  class_balanced_min_epochs_per_class_per_night: 10
+  class_balanced_class_set: classes_meeting_minimum_in_both_nights
+  paired_delta: night_2_minus_night_1
+  central_summaries:                    # sign-invariant, all 75 pairs
+    - median_and_iqr_abs_delta
+    - within_subject_sd                 # sqrt(sum(delta^2) / (2n))
+    - repeatability_coefficient         # 2.77 * within_subject_sd
+    - between_subject_sd_of_pair_means
+    - spearman_night1_vs_night2
+    - bland_altman_plot
+  signed_delta_reported_on: date_concordant_pairs_only
+  stratify_descriptively_by: [same_scorer, date_concordant]
+  mixed_model: none
+  icc: optional_one_way_anova_icc_1_1_descriptive
+  single_night_subjects_in_night_analysis: false
+
+execution:
+  edf_processing: one_record_at_a_time
+  write_raw_edf_to_repo: false
+  require_manifest_hash: true
+  require_fold_manifest: true
+  require_oof_coverage_one: true
+  require_no_subject_overlap: true
+  docker_required: false

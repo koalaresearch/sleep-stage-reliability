@@ -1,0 +1,68 @@
+{
+  "age_and_sex": "not extracted; SC-subjects.xls pending",
+  "checks": {
+    "all_expected_sha256_present": true,
+    "all_sha256_matched": true,
+    "complete_pairs_75": true,
+    "complete_psg_hyp_pairs": true,
+    "date_readable_everywhere": true,
+    "different_scorer_49": true,
+    "discordant_8_subjects": true,
+    "no_unrecognized_sc_edf": true,
+    "recordings_153": true,
+    "same_scorer_26": true,
+    "scorer_codes_11": true,
+    "singletons_13_36_52": true,
+    "subjects_78": true
+  },
+  "dataset": "PhysioNet Sleep-EDF Expanded 1.0.0 / Sleep-Cassette",
+  "date_discordant_subjects": [
+    "07",
+    "17",
+    "27",
+    "32",
+    "37",
+    "60",
+    "62",
+    "72"
+  ],
+  "date_unreadable_subjects": [],
+  "different_scorer_pairs": 49,
+  "hypnogram_annotations": "not read",
+  "inspection": "ZIP central directory + PSG EDF fixed headers only",
+  "manifest_sha256": "a43846b15cee19b9fd575619464108e04f0a2b7be771620816aaa9bcb0a3ed1a",
+  "number_of_complete_pairs": 75,
+  "number_of_recordings": 153,
+  "number_of_subjects": 78,
+  "overall_pass": true,
+  "same_scorer_pairs": 26,
+  "scorer_counts": {
+    "A": 17,
+    "C": 61,
+    "G": 4,
+    "H": 3,
+    "J": 17,
+    "M": 14,
+    "P": 9,
+    "U": 4,
+    "V": 14,
+    "W": 7,
+    "Y": 3
+  },
+  "sha256_entry_verification": "complete",
+  "single_night_subjects": {
+    "13": [
+      1
+    ],
+    "36": [
+      2
+    ],
+    "52": [
+      2
+    ]
+  },
+  "source_archive_bytes": 8715317980,
+  "source_archive_name": "sleep-edfx-1.0.0.zip",
+  "unpaired_recordings": [],
+  "unrecognized_edf_members": []
+}

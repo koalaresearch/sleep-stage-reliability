@@ -1,0 +1,62 @@
+{
+  "status": "PASS",
+  "scope": "LOSO Core only: no night claims",
+  "n_subjects": 78,
+  "n_recordings": 153,
+  "n_epochs": 161028,
+  "n_fits_per_model": 78,
+  "convergence_pass_max_iter": 2000,
+  "remaining_convergence_warnings": [],
+  "bootstrap_is_conditional_descriptive": true,
+  "input_hashes": {
+    "features_sha256": "c081b5ab45ee89e9a8bb0e5dcaad90295fa86f4314c249bd178d5742cb03411e",
+    "config_sha256": "d97625be30a562ecff8d147a459388aa86bd7b114b8d21128761dcbe1cdd8c93",
+    "qa_sha256": "1b3e3e357cb597902d51c800d15e94945c9b277c2aba48e0af9e6a29bda280c4",
+    "runner_sha256": "c55e7f714c88a1748287a624de7284ab08df6608005d74b16c0638272fca859d"
+  },
+  "models": {
+    "lr": {
+      "mean_subject_macro_f1": 0.5448238950835794,
+      "median_subject_macro_f1": 0.5605368711773324,
+      "iqr_subject_macro_f1": [
+        0.46285494729675736,
+        0.6203159502837806
+      ],
+      "sd_subject_macro_f1": 0.10624771677464745,
+      "bootstrap_interval_subject_resample_conditional": [
+        0.5207142533278598,
+        0.5681364990383649
+      ],
+      "mean_subject_fixed_five_f1": 0.5361539176791795,
+      "mean_subject_union_f1": 0.5377652946994217,
+      "equal_subject_weighted_epoch_confusion_macro_f1": 0.6043594107525202,
+      "raw_pooled_macro_f1": 0.6036314248908952
+    },
+    "dummy": {
+      "mean_subject_macro_f1": 0.11975005199256732,
+      "median_subject_macro_f1": 0.12109692124018667,
+      "iqr_subject_macro_f1": [
+        0.10942107416150326,
+        0.13019720682292207
+      ],
+      "sd_subject_macro_f1": 0.018612002696812548,
+      "bootstrap_interval_subject_resample_conditional": [
+        0.11574525565963172,
+        0.12398408409521704
+      ],
+      "mean_subject_fixed_five_f1": 0.117503951100153,
+      "mean_subject_union_f1": 0.11975005199256732,
+      "equal_subject_weighted_epoch_confusion_macro_f1": 0.11844586728700487,
+      "raw_pooled_macro_f1": 0.11759877939706424
+    }
+  },
+  "versions": {
+    "sklearn": "1.8.0",
+    "numpy": "2.4.4",
+    "pandas": "3.0.2"
+  },
+  "artifact_sha256": {
+    "oof_predictions_csv": "813439619d769a3a9bba04aed252e4d90742d1681ee79861dd393c00bcb57d5d",
+    "subject_metrics_csv": "050adcc02cbccc7894b478eb7a5b68844855da52af576e823d20a906a70f1bda"
+  }
+}
