@@ -24,8 +24,8 @@ loss. It additionally documents scorer-related annotation differences,
 recording-date inconsistencies, and sensitivity to loss aggregation.
 
 This is **not** a state-of-the-art model, a clinical validation, or a claim of
-scientific novelty. The LOSO evaluation is, in effect, a replication with a
-weaker model of analyses that already exist for this cohort (see
+scientific novelty. Subject- and recording-level evaluations of automatic
+sleep staging on this cohort already exist (see
 [Related work](#related-work)). The emphasis is on transparent definitions,
 provenance, and documented dataset caveats.
 
@@ -42,7 +42,7 @@ provenance, and documented dataset caveats.
 | **Mean subject-level macro-F1, Logistic Regression** | **0.5448** |
 | **Mean subject-level macro-F1, Dummy (class prior)** | **0.1198** |
 | Subjects with two recordings (paired) | 75 |
-| Median absolute paired difference in LR mean log-loss (record 2 − record 1) | ≈ 0.1121 |
+| Median absolute paired difference in LR mean log-loss, \|record 2 − record 1\| (orientation-invariant) | ≈ 0.1121 |
 | Pairs annotated by different scorers | 49 of 75 |
 | Pairs with discordant EDF header dates | 8 of 75 |
 
@@ -58,8 +58,17 @@ in [`results/loso_summary.json`](results/loso_summary.json) and
 bootstrap intervals are descriptive and conditional on the trained models; no
 hypothesis tests are reported.
 
+The paired summary (schema 2.0) separates three kinds of statistic:
+orientation-invariant values over all 75 pairs, nominal-orientation diagnostics
+that depend on the file-name night order, and chronological signed values
+restricted to the 67 date-concordant pairs. See
+[`report/RESULTS_SCHEMA.md`](report/RESULTS_SCHEMA.md).
+
 Verification status of each result is listed in
-[`report/VERIFICATION.md`](report/VERIFICATION.md).
+[`report/VERIFICATION.md`](report/VERIFICATION.md). An independent numerical
+audit recomputed the reported statistics from the saved out-of-fold
+predictions (9,190 values, all within tolerance). It did not re-run the
+pipeline from the raw EDF recordings.
 
 ![Bland–Altman plot of LR mean log-loss across the two recordings](results/figures/bland_altman_lr_mean_loss.png)
 
@@ -78,6 +87,7 @@ Sleep-EDF Expanded ZIP (downloaded separately, never extracted in full)
   └─ 5. Pre-model QA                      validate_sleep_edf_features_v1_2.py
   └─ 6. LOSO LR vs Dummy + metrics        run_sleep_edf_loso_v1_2.py
   └─ 7. Paired-recording analysis         analyze_sleep_edf_night_pairs_v1_2.py
+       7b. Relabel summary to schema 2.0  restructure_night_pair_summary.py (no arithmetic)
 ```
 
 All analysis parameters (channel, epoching, label map, window rule, Welch
@@ -107,6 +117,7 @@ search. Full methodological detail: [`report/METHODS.md`](report/METHODS.md).
 │   └── figures/
 ├── report/
 │   ├── METHODS.md
+│   ├── RESULTS_SCHEMA.md
 │   └── VERIFICATION.md
 └── work/                        reproduction outputs (created locally; Git-ignored)
 ```
@@ -211,6 +222,11 @@ python src/analyze_sleep_edf_night_pairs_v1_2.py \
   --window-audit work/window_audit_all_153.csv \
   --config config/study_v1_2.yaml \
   --out work/night_pairs_v1_2
+
+# 7b. Relabel the paired summary into schema 2.0 (moves and renames fields only)
+python src/restructure_night_pair_summary.py \
+  --in work/night_pairs_v1_2/night_pair_summary.json \
+  --out work/night_pair_summary.json
 ```
 
 Each stage verifies the SHA-256 of its inputs (configuration, manifest, window
@@ -228,6 +244,7 @@ free scratch space.
 | 5 | Refuses to run if the QA output file already exists. |
 | 6 | Resumable. Saved per-subject checkpoints are verified and reused. An existing `published/` folder is left unchanged if its recorded input hashes match the current inputs; otherwise the run stops. |
 | 7 | Refuses to run if the output folder already exists. Its parent folder must exist. |
+| 7b | Refuses to run if the output file already exists, or if the input is not a schema-1.0 summary. |
 
 To start a reproduction from scratch, delete `work/` or use a new folder in its
 place. The usage examples inside the script docstrings still show an older
@@ -241,14 +258,16 @@ files can be compared with the committed reference results:
 | `work/audit_summary.json` | `results/audit_summary.json` |
 | `work/window_audit_summary.json` | `results/window_audit_summary.json` |
 | `work/loso_v1_2/published/loso_summary.json` | `results/loso_summary.json` |
-| `work/night_pairs_v1_2/night_pair_summary.json` | `results/night_pair_summary.json` |
+| `work/night_pair_summary.json` (schema 2.0, from step 7b) | `results/night_pair_summary.json` (schema 2.0) |
 | `work/night_pairs_v1_2/figures/*.png` | `results/figures/*.png` |
 
 The numerical values should agree. The provenance hashes recorded inside the
 JSON files will differ for `config_sha256` and for the hashes that depend on
 it, because the configuration file was edited (comments only) for
 publication; see
-[`report/VERIFICATION.md`](report/VERIFICATION.md#provenance-hashes).
+[`report/VERIFICATION.md`](report/VERIFICATION.md#provenance-hashes). The
+schema-1.0 output of step 7 (`work/night_pairs_v1_2/night_pair_summary.json`)
+has the layout of the audited historical output; step 7b relabels it.
 
 ### 4. Tests
 
@@ -287,13 +306,26 @@ the numerical results.
   only.
 - **Recording order.** Night index is taken from the file name. In 8 pairs the
   EDF header dates are not consecutive (including reversed and identical
-  dates), so chronological order is not verified for those subjects; signed
-  differences are reported for the 67 date-concordant pairs only.
+  dates), so chronological order is not verified for those subjects.
+  Chronological signed summaries use the 67 date-concordant pairs only. Signed
+  values over all 75 pairs (signed mean and median, SD of Δ, centred scale,
+  Spearman correlation between record columns) are reported only as
+  nominal-orientation diagnostics. This is a limited, documented deviation
+  from the configuration's signed-reporting rule.
 - **Only two recordings per subject.** Two recordings give one difference per
   subject. Within-subject variability is estimated with low precision per
   subject, and no mixed model or causal decomposition is attempted. The
-  protocol's within-pair scale `sqrt(mean(Δ²)/2)` includes any systematic
-  session bias; a centred `SD(Δ)/√2` is reported alongside it.
+  protocol's within-pair scale `sqrt(mean(Δ²)/2)` is orientation-invariant but
+  includes any systematic session bias. The centred `SD(Δ)/√2` reported
+  alongside it removes the mean bias but depends on the nominal pair
+  orientation, so it is not chronology-independent.
+- **Scope of verification.** The independent numerical audit verified the
+  reported statistics from the saved out-of-fold predictions and saved audit
+  tables. It did not re-run the historical pipeline from raw EDF recordings
+  through feature extraction to model fitting. The feature matrix and per-fold
+  outputs were not part of the audit. Absence of upstream leakage is therefore
+  supported by the pipeline's own checks and by the saved predictions, but not
+  independently proven.
 - **Dependent folds.** The 78 LOSO training sets share 76 of 77 subjects, so the
   folds are not independent estimates. Bootstrap intervals resample subjects of
   this cohort and do not include training variability.
@@ -304,10 +336,6 @@ the numerical results.
 
 ## Related work
 
-- **sleep-ST** (I. Linari): an existing open implementation that reports
-  per-subject LOSO macro-F1 on the same 78 Sleep-Cassette subjects with a
-  stronger multichannel (EEG, EOG, EMG) model.
-  <https://github.com/ignaciolinari/sleep-ST> (referenced at commit `72989b7`).
 - **SLEEPYLAND** (Dei Rossi et al., 2026): reports per-recording performance
   distributions with Sleep-Cassette among the external sets.
 - Shih, Lv, Zhai & Xu (2026): physiology-informed spectral–temporal learning
@@ -347,11 +375,10 @@ Dataset, original publication and PhysioNet citations are listed in
    <https://doi.org/10.1038/s41746-025-02237-2>
 7. Shih, Lv, Zhai, Xu. *Frontiers in Signal Processing.* 2026.
    <https://doi.org/10.3389/frsip.2026.1956948>
-8. Linari I. sleep-ST. <https://github.com/ignaciolinari/sleep-ST>
-9. Gramfort A, et al. MEG and EEG data analysis with MNE-Python.
+8. Gramfort A, et al. MEG and EEG data analysis with MNE-Python.
    *Front Neurosci.* 2013;7:267.
-10. Pedregosa F, et al. Scikit-learn: Machine Learning in Python.
-    *JMLR.* 2011;12:2825–2830.
+9. Pedregosa F, et al. Scikit-learn: Machine Learning in Python.
+   *JMLR.* 2011;12:2825–2830.
 
 ## Licence
 

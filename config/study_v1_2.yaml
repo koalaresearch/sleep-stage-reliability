@@ -125,13 +125,15 @@ night_reliability:                      # §7
   class_balanced_min_epochs_per_class_per_night: 10
   class_balanced_class_set: classes_meeting_minimum_in_both_nights
   paired_delta: night_2_minus_night_1
-  central_summaries:                    # sign-invariant, all 75 pairs
-    - median_and_iqr_abs_delta
-    - within_subject_sd                 # sqrt(sum(delta^2) / (2n))
-    - repeatability_coefficient         # 2.77 * within_subject_sd
-    - between_subject_sd_of_pair_means
-    - spearman_night1_vs_night2
-    - bland_altman_plot
+  central_summaries:                    # all 75 pairs; orientation behaviour noted per item
+    - median_and_iqr_abs_delta          # orientation-invariant
+    - within_subject_sd                 # sqrt(sum(delta^2) / (2n)); orientation-invariant (RMS-based)
+    - repeatability_coefficient         # 2.77 * within_subject_sd; orientation-invariant
+    - between_subject_sd_of_pair_means  # orientation-invariant
+    - spearman_night1_vs_night2         # depends on nominal record order (file-name night index)
+    - bland_altman_plot                 # signed display in nominal order; bias/limits from concordant pairs
+  # Signed (chronological) summaries use the 67 date-concordant pairs only. Signed values over all
+  # 75 pairs are reported separately as nominal-orientation diagnostics (results schema 2.0).
   signed_delta_reported_on: date_concordant_pairs_only
   stratify_descriptively_by: [same_scorer, date_concordant]
   mixed_model: none

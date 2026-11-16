@@ -139,14 +139,31 @@ Restricted to the 75 subjects with two recordings.
   stage-balanced loss (mean of per-stage mean losses over the stages with
   ≥ 10 epochs in **both** recordings of the subject).
 - **Paired difference:** `Δ_i = L_i,night2 − L_i,night1` (file-name night index).
-- **Sign-invariant summaries over all 75 pairs:** mean and median of |Δ|, IQR of
-  |Δ|, SD of Δ, within-pair scale `sqrt(mean(Δ²)/2)` as specified in the
-  protocol (includes systematic bias) and centred `SD(Δ)/√2`, the corresponding
-  repeatability coefficients (× 2.77), SD of the pair means between subjects,
-  and Spearman correlation between the two records.
-- **Signed summaries:** mean and median Δ only for the 67 date-concordant pairs.
+The summaries fall into three groups. They are reported in separate blocks of
+`results/night_pair_summary.json` (schema 2.0; field mapping in
+[`RESULTS_SCHEMA.md`](RESULTS_SCHEMA.md)):
+
+- **Orientation-invariant, all 75 pairs.** These do not change if the two
+  recordings of a pair are swapped: mean, median and IQR of |Δ|; the
+  within-pair scale `sqrt(mean(Δ²)/2)` as specified in the protocol (RMS-based,
+  so it includes any systematic session bias) and its repeatability
+  coefficient (× 2.77); the SD of the pair means between subjects; and the
+  bootstrap intervals for the mean and median of |Δ|.
+- **Nominal-orientation diagnostics, all 75 pairs.** These depend on the
+  file-name night order, which is not verified chronology for the 8
+  date-discordant pairs: signed mean and median of Δ, SD of Δ, the centred
+  scale `SD(Δ)/√2` and its repeatability coefficient, and the Spearman
+  correlation between the record-1 and record-2 columns. They are kept as
+  labelled diagnostics. This is a limited deviation from the configuration
+  rule that signed deltas are reported on date-concordant pairs only. They are
+  not chronological or night effects.
+- **Chronological signed summaries, 67 date-concordant pairs.** Mean and median
+  Δ with a bootstrap interval for the mean, restricted to the pairs whose EDF
+  header dates are consecutive.
 - **Descriptive strata:** same vs different scorer (26 / 49), concordant vs
-  discordant dates (67 / 8). Not causal contrasts.
+  discordant dates (67 / 8). Each stratum separates orientation-invariant
+  values from nominal-orientation diagnostics. In the concordant-dates stratum
+  the nominal order agrees with the recorded dates. Not causal contrasts.
 - **Bootstrap:** 2,000 resamples of subject pairs, seed `20261111`
   (+1 and +2 for the |Δ| mean and median intervals).
 - **Figures:** Bland–Altman plot of mean loss (pair mean vs Δ; markers by
