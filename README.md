@@ -23,15 +23,14 @@ subject-level generalization and between-recording variability in predictive
 loss. It additionally documents scorer-related annotation differences,
 recording-date inconsistencies, and sensitivity to loss aggregation.
 
-This is **not** a state-of-the-art model, a clinical validation, or a claim of
-scientific novelty. Subject- and recording-level evaluations of automatic
-sleep staging on this cohort already exist (see
-[Related work](#related-work)). The emphasis is on transparent definitions,
-provenance, and documented dataset caveats.
+This study is a methodological evaluation, not a competitive sleep-staging
+benchmark or clinical validation. Related work is cited below; the emphasis
+is on subject-level generalization, between-recording variability, and
+transparent reporting.
 
 ---
 
-## Main results (verified)
+## Main results
 
 | Quantity | Value |
 |---|---|
@@ -49,7 +48,7 @@ provenance, and documented dataset caveats.
 Subject-level macro-F1 is computed per subject over the stages that are present
 in that subject's reference labels, then averaged with equal weight per subject
 (definition in [`report/METHODS.md`](report/METHODS.md#5-performance-metrics)).
-The Dummy classifier is a floor, not a scientific comparator.
+The Dummy classifier provides a prevalence-based reference baseline.
 
 Additional descriptive quantities (median, IQR, subject-resampled bootstrap
 intervals, sensitivity definitions of macro-F1, stratified paired summaries) are
@@ -283,54 +282,12 @@ the numerical results.
 
 ## Limitations
 
-- **Single dataset, single cohort.** Sleep-Cassette contains healthy volunteers
-  recorded at home in 1989–1991 (age range 25–101 years). Results do not
-  transfer to patients, other montages, modern devices, or other scoring
-  standards. Labels follow the Rechtschaffen & Kales rules, with stages 3 and 4
-  merged into N3.
-- **Weak, fixed model by design.** Ten spectral features from one EEG channel
-  and a linear classifier. No temporal context. Relative band powers are
-  linearly dependent, and absolute powers depend on EEG amplitude, which
-  declines with age. No per-recording normalisation is applied.
-- **Retrospective, label-defined analysis window.** The evaluated epochs lie in
-  the main sleep episode (episodes merged across wake gaps < 60 min, plus 30 min
-  of wake on each side), which is chosen *from the reference hypnogram*. This is
-  an evaluation universe, not a deployable pipeline, and it excludes
-  4,140 sleep epochs outside the main episode in 49 of 153 records.
-- **Annotation-related confounding.** In 49 of the 75 pairs the two recordings
-  were scored by different scorers. Scorer assignment was not random and is
-  associated with age and recording year. Between-recording differences in loss
-  therefore mix physiological night-to-night variation, first-night effects,
-  scorer differences, stage composition and artefacts; these cannot be
-  separated with the available data. The scorer stratification is descriptive
-  only.
-- **Recording order.** Night index is taken from the file name. In 8 pairs the
-  EDF header dates are not consecutive (including reversed and identical
-  dates), so chronological order is not verified for those subjects.
-  Chronological signed summaries use the 67 date-concordant pairs only. Signed
-  values over all 75 pairs (signed mean and median, SD of Δ, centred scale,
-  Spearman correlation between record columns) are reported only as
-  nominal-orientation diagnostics. This is a limited, documented deviation
-  from the configuration's signed-reporting rule.
-- **Only two recordings per subject.** Two recordings give one difference per
-  subject. Within-subject variability is estimated with low precision per
-  subject, and no mixed model or causal decomposition is attempted. The
-  protocol's within-pair scale `sqrt(mean(Δ²)/2)` is orientation-invariant but
-  includes any systematic session bias. The centred `SD(Δ)/√2` reported
-  alongside it removes the mean bias but depends on the nominal pair
-  orientation, so it is not chronology-independent.
-- **Scope of verification.** The independent numerical audit verified the
-  reported statistics from the saved out-of-fold predictions and saved audit
-  tables. It did not re-run the historical pipeline from raw EDF recordings
-  through feature extraction to model fitting. The feature matrix and per-fold
-  outputs were not part of the audit. Absence of upstream leakage is therefore
-  supported by the pipeline's own checks and by the saved predictions, but not
-  independently proven.
-- **Dependent folds.** The 78 LOSO training sets share 76 of 77 subjects, so the
-  folds are not independent estimates. Bootstrap intervals resample subjects of
-  this cohort and do not include training variability.
-- **Internal protocol.** The analysis followed a versioned internal plan frozen
-  before metrics were computed; it was not externally preregistered.
+- **Dataset and model scope.** This study evaluates a fixed, single-channel spectral classifier on the Sleep-EDF Sleep-Cassette cohort. Generalization to other populations, devices and scoring standards was not assessed.
+- **Retrospective evaluation window.** The main-sleep window is derived from reference annotations and excludes 4,140 sleep epochs outside the selected main episode. Results describe performance within this window, not a real-time deployment scenario.
+- **Paired-recording interpretation.** Each of the 75 paired subjects contributes two recordings. Differences in predictive loss may reflect physiology, annotation practices, sleep-stage composition and recording artifacts. The study cannot isolate their contributions. Forty-nine pairs were annotated by different scorers.
+- **Recording chronology.** Eight pairs have discordant recording dates. Absolute differences use all 75 pairs; chronological signed summaries use the 67 date-concordant pairs. Nominal-order diagnostics are reported separately. The RMS-based within-pair scale includes any systematic session bias.
+- **Uncertainty and verification.** LOSO training sets overlap, and bootstrap intervals are conditional on the fitted models. Independent verification reproduced numerical results from saved out-of-fold predictions, but did not independently reproduce raw-data processing, feature extraction or model fitting, or establish the absence of upstream leakage. The computational environment has not been independently reproduced.
+- **Protocol status.** The study used a versioned internal protocol that was not externally preregistered.
 
 ---
 
